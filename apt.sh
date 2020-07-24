@@ -30,3 +30,17 @@ if [[ -f '/run/reboot-required' ]] ; then
 else
   echo 'node_reboot_required 0'
 fi
+
+echo '# HELP apt_upgrades_pending_packages Apt package pending updates.'
+echo '# TYPE apt_upgrades_pending_packages gauge'
+/usr/bin/apt-get --just-print dist-upgrade | grep ^Inst | tr '\( \) \[ \]' ' ' |while read pkg_list;do 
+  if [[ -n "${pkg_list}" ]]; then
+    pkg=$(echo $pkg_list | awk '{print $2}'); 
+    origin=$(echo $pkg_list | awk '{print $(NF-1)}'); 
+    arch=$(echo $pkg_list | awk '{print $NF}') ;
+    #echo $pkg - $origin - $arch
+    echo "apt_upgrades_pending_packages{package=\"${pkg}\",origin=\"${origin}\",arch=\"${arch}\"} 1"
+  else
+    echo 'apt_upgrades_pending_packages{package="",origin="",arch=""} 0'
+  fi
+done
